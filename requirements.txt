@@ -1,0 +1,20 @@
+dnspython==2.8.0
+certifi
+pywebview==5.4
+
+# macOS
+rumps==0.4.0; sys_platform == "darwin"
+pyobjc-framework-Cocoa==12.2.2; sys_platform == "darwin"
+pyobjc-framework-WebKit==12.2.2; sys_platform == "darwin"
+pyobjc-framework-CoreWLAN==12.2.2; sys_platform == "darwin"
+pyobjc-framework-CoreLocation==12.2.2; sys_platform == "darwin"
+
+# Windows
+pystray==0.19.5; sys_platform == "win32"
+pillow; sys_platform == "win32"
+
+# build and test only
+pytest
+py2app==0.28.10; sys_platform == "darwin"
+pyobjc-framework-Quartz==12.2.2; sys_platform == "darwin"
+pyinstaller==6.16.0; sys_platform == "win32"

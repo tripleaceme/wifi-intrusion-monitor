@@ -1,0 +1,435 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wi-Fi Intrusion Monitor</title>
+<meta name="description" content="A free Mac app that watches the Wi-Fi you join. When another device on the network attacks your laptop, it turns Wi-Fi off and tells you what happened.">
+<meta name="author" content="Ayoade Adegbite">
+<link rel="canonical" href="https://ayoadeabel.tech/wifi-intrusion-monitor">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://ayoadeabel.tech/wifi-intrusion-monitor">
+<meta property="og:title" content="Wi-Fi Intrusion Monitor">
+<meta property="og:description" content="A free Mac app that watches the Wi-Fi you join. When another device on the network attacks your laptop, it turns Wi-Fi off and tells you what happened.">
+<meta property="og:image" content="https://ayoadeabel.tech/alert.png">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1440">
+<meta property="og:image:height" content="900">
+<meta property="og:image:alt" content="Wi-Fi Intrusion Monitor's full-screen alert: INTRUSION DETECTED, man-in-the-middle attack.">
+<meta property="og:site_name" content="Ayoade Adegbite">
+<meta property="og:locale" content="en_US">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:site" content="@abel_analytics">
+<meta name="twitter:creator" content="@abel_analytics">
+<meta name="twitter:title" content="Wi-Fi Intrusion Monitor">
+<meta name="twitter:description" content="A free Mac app that watches the Wi-Fi you join. When another device on the network attacks your laptop, it turns Wi-Fi off and tells you what happened.">
+<meta name="twitter:image" content="https://ayoadeabel.tech/alert.png">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='100 100 824 824'%3E%3Crect x='100' y='100' width='824' height='824' rx='185' fill='%231a0303'/%3E%3Cpath d='M512 210 L772 300 V500 C772 660 660 770 512 822 C364 770 252 660 252 500 V300 Z' fill='%23e3261f'/%3E%3Cg fill='none' stroke='%23fff' stroke-linecap='round' stroke-width='44'%3E%3Cpath d='M382 480 A190 190 0 0 1 642 480'/%3E%3Cpath d='M430 548 A118 118 0 0 1 594 548'/%3E%3C/g%3E%3Ccircle cx='512' cy='624' r='36' fill='%23fff'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Darker+Grotesque:wght@500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #131313;
+    --line: #2a2a2a;
+    --text: #fafafa;
+    --muted: #a0a0a0;
+    --accent: #e85d04;
+    --accent-hover: #ff6d12;
+    --alert: #ff2a2a;
+    --ok: #38e07b;
+    --serif: "Instrument Serif", Georgia, serif;
+    --sans: "Darker Grotesque", system-ui, -apple-system, sans-serif;
+    --gutter: clamp(16px, 3vw, 40px);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 500 18px/1.5 var(--sans);
+    height: 100dvh;
+    overflow: hidden;              /* the page never scrolls; only the panel does */
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr);  /* stops the tab strip from widening the page */
+  }
+  a { color: inherit; }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+  /* ---- top bar ---------------------------------------------------------- */
+  .top {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 14px var(--gutter);
+    border-bottom: 1px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; text-decoration: none; min-width: 0; }
+  .brand svg { width: 28px; height: 28px; flex: none; }
+  .brand span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .top a.home { color: var(--muted); font-size: 16px; text-decoration: none; white-space: nowrap; }
+  .top a.home:hover { color: var(--text); }
+
+  /* ---- main ------------------------------------------------------------- */
+  main {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(24px, 4vw, 64px);
+    padding: clamp(16px, 3vh, 40px) var(--gutter);
+    min-height: 0;
+  }
+  .intro {
+    display: flex; flex-direction: column; justify-content: center;
+    gap: clamp(12px, 2.2vh, 24px);
+    min-height: 0; overflow-y: auto;
+  }
+  .eyebrow { font-size: 14px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  h1 { font: 400 clamp(34px, min(4.6vw, 7vh), 72px)/1.02 var(--serif); letter-spacing: -.01em; }
+  .lede { color: #d6d6d6; font-size: clamp(17px, 2.2vh, 21px); max-width: 34em; }
+  .cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    background: var(--accent); color: #fff; text-decoration: none;
+    font: 700 19px/1 var(--sans);
+    padding: 15px 24px; border-radius: 6px;
+  }
+  .btn:hover { background: var(--accent-hover); }
+  .btn svg { width: 20px; height: 20px; }
+  .meta { color: var(--muted); font-size: 15px; }
+
+  /* ---- tabs + panel ----------------------------------------------------- */
+  .viewer { display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+  .tabs {
+    display: flex; gap: 4px;
+    border-bottom: 1px solid var(--line);
+    overflow-x: auto; scrollbar-width: none;
+    flex: none;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    flex: none;
+    background: none; border: 0; color: var(--muted);
+    font: 700 16px/1 var(--sans);
+    padding: 12px 14px 13px;
+    border-bottom: 2px solid transparent; margin-bottom: -1px;
+    cursor: pointer; white-space: nowrap;
+  }
+  .tab:hover { color: var(--text); }
+  .tab[aria-selected="true"] { color: var(--text); border-bottom-color: var(--accent); }
+  .panel {
+    flex: 1; min-height: 0;
+    overflow-y: auto; overscroll-behavior: contain;
+    padding-top: clamp(14px, 2.4vh, 24px);
+  }
+  .panel[hidden] { display: none; }
+  .panel h2 { font: 400 clamp(24px, 3.2vh, 32px)/1.1 var(--serif); margin-bottom: 8px; }
+  .panel p { color: #d6d6d6; }
+  .panel p + p { margin-top: 10px; }
+
+  /* See it */
+  #p-see { display: flex; flex-direction: column; gap: 12px; }
+  #p-see[hidden] { display: none; }
+  .platforms { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; padding: 3px; align-self: flex-start; flex: none; }
+  .platforms button {
+    background: none; border: 0; color: var(--muted);
+    font: 700 15px/1 var(--sans); padding: 8px 14px; border-radius: 4px; cursor: pointer;
+  }
+  .platforms button[aria-pressed="true"] { background: var(--surface); color: var(--text); box-shadow: inset 0 0 0 1px var(--line); }
+  .shot { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
+  .shot[hidden] { display: none; }
+  .shot img {
+    flex: 0 1 auto; min-height: 0;
+    width: auto; height: auto; max-width: 100%; max-height: 100%;
+    object-fit: contain; align-self: flex-start;
+    border-radius: 8px;
+  }
+  .nw { white-space: nowrap; }
+  .shot figcaption { color: var(--muted); font-size: 16px; flex: none; }
+  .placeholder {
+    flex: 1; min-height: 160px;
+    border: 1px dashed #3a3a3a; border-radius: 8px;
+    display: grid; place-content: center; text-align: center; gap: 6px;
+    padding: 24px; color: var(--muted);
+  }
+  .placeholder strong { color: var(--text); font-size: 20px; }
+
+  /* What it catches */
+  .threats { list-style: none; display: grid; gap: 0; border-top: 1px solid var(--line); }
+  .threats li {
+    display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: 4px 24px;
+    padding: 12px 0; border-bottom: 1px solid var(--line);
+  }
+  .threats b { display: block; font-size: 19px; line-height: 1.25; }
+  .threats .tech { color: var(--accent); font-size: 14px; font-weight: 700; letter-spacing: .04em; }
+  .threats .how { color: #cfcfcf; font-size: 16px; line-height: 1.4; }
+  .threats .how em { font-style: normal; color: var(--muted); display: block; }
+  .tiers { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 14px; font-size: 16px; color: #cfcfcf; }
+  .tiers span::before { content: ""; display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 8px; background: var(--alert); }
+  .tiers span.warn::before { background: #ffb020; }
+
+  /* Install */
+  .install-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-bottom: 6px; }
+  .install-head h2 { margin-bottom: 0; }
+  .steps { list-style: none; counter-reset: s; display: grid; gap: 14px; margin-top: 6px; }
+  .steps li { counter-increment: s; display: grid; grid-template-columns: 34px minmax(0, 1fr); gap: 12px; color: #d6d6d6; }
+  .steps li::before {
+    content: counter(s);
+    width: 30px; height: 30px; border-radius: 50%;
+    border: 1px solid var(--accent); color: var(--accent);
+    display: grid; place-content: center; font-weight: 800; font-size: 16px;
+  }
+  .steps b { color: var(--text); }
+  .dots { margin-top: 18px; padding: 14px 16px; background: var(--surface); border-radius: 8px; font-size: 16px; color: #cfcfcf; }
+
+  /* Privacy */
+  .cols { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; margin-top: 10px; }
+  .card { background: var(--surface); border-radius: 8px; padding: 16px 18px; }
+  .card h3 { font-size: 17px; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 8px; }
+  .card.yes h3 { color: var(--ok); }
+  .card.no h3 { color: var(--alert); }
+  .card ul { padding-left: 1.1em; color: #d6d6d6; font-size: 16px; display: grid; gap: 6px; }
+
+  /* Phones */
+  .links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 18px; }
+  .ghost {
+    display: inline-flex; padding: 12px 18px; border-radius: 6px;
+    border: 1px solid var(--line); text-decoration: none; font-weight: 700;
+  }
+  .ghost:hover { border-color: var(--accent); }
+
+  /* ---- footer ----------------------------------------------------------- */
+  footer {
+    display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+    padding: 10px var(--gutter); border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 14px;
+  }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--text); }
+
+  /* ---- phones and narrow windows: stack, keep the page at one screen ---- */
+  @media (max-width: 860px) and (orientation: portrait) {
+    body { font-size: 17px; }
+    main { display: flex; flex-direction: column; gap: 16px; padding-top: 16px; padding-bottom: 12px; }
+    .intro { flex: none; overflow: visible; justify-content: flex-start; gap: 10px; }
+    h1 { font-size: clamp(28px, 8vw, 40px); }
+    .lede { font-size: 16px; }
+    .btn { font-size: 17px; padding: 13px 18px; }
+    .meta { font-size: 13px; }
+    .viewer { flex: 1; }
+    .threats li { grid-template-columns: minmax(0, 1fr); }
+    .cols { grid-template-columns: minmax(0, 1fr); }
+    .top a.home { font-size: 14px; }
+    footer { font-size: 13px; padding-top: 8px; padding-bottom: 8px; }
+  }
+  @media (max-width: 860px) and (orientation: portrait) and (max-height: 760px) {
+    .lede { display: none; }
+    .eyebrow { display: none; }
+  }
+  @media (max-width: 860px) and (orientation: portrait) and (max-height: 640px) {
+    .shot figcaption { display: none; }
+  }
+  @media (max-width: 400px) {
+    .top a.home { display: none; }  /* the footer links to the main site */
+    .brand span { font-size: 16px; }
+    .cta { gap: 8px 14px; }
+  }
+  /* short landscape screens (a phone on its side): stay side by side, trim the intro */
+  @media (orientation: landscape) and (max-height: 560px) {
+    .top { padding-top: 8px; padding-bottom: 8px; }
+    main { padding-top: 12px; padding-bottom: 8px; gap: 24px; }
+    .intro { gap: 8px; justify-content: flex-start; }
+    .lede, .eyebrow, .meta { display: none; }
+    h1 { font-size: clamp(22px, 6.5vh, 34px); }
+    .btn { font-size: 16px; padding: 11px 16px; }
+    .tab { padding: 9px 10px 10px; font-size: 15px; }
+    footer { padding-top: 6px; padding-bottom: 6px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <a class="brand" href="#">
+    <svg viewBox="100 100 824 824" aria-hidden="true"><rect x="100" y="100" width="824" height="824" rx="185" fill="#1a0303"/><path d="M512 210 L772 300 V500 C772 660 660 770 512 822 C364 770 252 660 252 500 V300 Z" fill="#e3261f"/><g fill="none" stroke="#fff" stroke-linecap="round" stroke-width="44"><path d="M382 480 A190 190 0 0 1 642 480"/><path d="M430 548 A118 118 0 0 1 594 548"/></g><circle cx="512" cy="624" r="36" fill="#fff"/></svg>
+    <span>Wi-Fi Intrusion Monitor</span>
+  </a>
+  <a class="home" href="https://ayoadeabel.tech">By Ayoade Adegbite</a>
+</header>
+
+<main>
+  <section class="intro">
+    <div class="eyebrow">Free for Mac and Windows</div>
+    <h1>Know when someone on your <span class="nw">Wi-Fi</span> goes after your laptop.</h1>
+    <p class="lede">Wi-Fi Intrusion Monitor watches the network you join, at a café, a hotel, an airport or at home. When another device on that network attacks your laptop, it turns your Wi-Fi off and tells you what happened and what to do next.</p>
+    <div class="cta">
+      <a class="btn" href="WiFi-Intrusion-Monitor-mac.dmg" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+        Download for Mac
+      </a>
+      <a class="btn" href="WiFi-Intrusion-Monitor-windows.exe" download>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11m0 0-4.5-4.5M12 15l4.5-4.5M5 20h14"/></svg>
+        Download for Windows
+      </a>
+    </div>
+    <p class="meta">Version 0.1.0 · macOS 11 or later, Intel and Apple Silicon · Windows 10 or 11</p>
+  </section>
+
+  <section class="viewer">
+    <div class="tabs" role="tablist" aria-label="About the app">
+      <button class="tab" role="tab" id="t-see" aria-controls="p-see" aria-selected="true">See it</button>
+      <button class="tab" role="tab" id="t-catch" aria-controls="p-catch" aria-selected="false" tabindex="-1">What it catches</button>
+      <button class="tab" role="tab" id="t-install" aria-controls="p-install" aria-selected="false" tabindex="-1">Install</button>
+      <button class="tab" role="tab" id="t-privacy" aria-controls="p-privacy" aria-selected="false" tabindex="-1">Privacy</button>
+      <button class="tab" role="tab" id="t-phones" aria-controls="p-phones" aria-selected="false" tabindex="-1">Phones</button>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-see" aria-labelledby="t-see">
+      <div class="platforms" role="group" aria-label="Platform">
+        <button type="button" data-platform="mac" aria-pressed="true">macOS</button>
+        <button type="button" data-platform="win" aria-pressed="false">Windows</button>
+      </div>
+      <figure class="shot" data-os="mac">
+        <img src="alert.png" alt="Full-screen red alert reading INTRUSION DETECTED: man-in-the-middle attack. A threat report lists the attacker's IP and hardware address, and a panel explains what it means and what to do. Buttons: I understand, Reconnect anyway, I trust this network.">
+        <figcaption>When it catches an attack, this fills every screen. It names the attack and the device behind it, and lists what to do.</figcaption>
+      </figure>
+      <figure class="shot" data-os="win" hidden>
+        <img src="alert.png" alt="Full-screen red alert reading INTRUSION DETECTED: man-in-the-middle attack. A threat report lists the attacker's IP and hardware address, and a panel explains what it means and what to do. Buttons: I understand, Reconnect anyway, I trust this network.">
+        <figcaption>When it catches an attack, this fills every screen. It names the attack and the device behind it, and lists what to do.</figcaption>
+      </figure>
+      </figure>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-catch" aria-labelledby="t-catch" hidden>
+      <ul class="threats">
+        <li>
+          <div><b>Someone pretending to be the router</b><span class="tech">MAN-IN-THE-MIDDLE · ARP SPOOFING</span></div>
+          <div class="how">Your traffic passes through their device, so they can read or change it.<em>Caught when the router's hardware address changes while you are on the same network.</em></div>
+        </li>
+        <li>
+          <div><b>Fake website addresses</b><span class="tech">DNS HIJACKING</span></div>
+          <div class="how">You type your bank's name and land on a copy built to take your password.<em>Caught by checking the Wi-Fi's answers against addresses that never change and against encrypted DNS.</em></div>
+        </li>
+        <li>
+          <div><b>A broken padlock</b><span class="tech">HTTPS INTERCEPTION</span></div>
+          <div class="how">They swap security certificates so they can read encrypted pages.<em>Caught when a secure request to a known server fails its certificate check.</em></div>
+        </li>
+        <li>
+          <div><b>Someone probing your laptop</b><span class="tech">PORT SCANNING</span></div>
+          <div class="how">They look for an open door into your computer.<em>Caught by decoy doors that no honest phone, laptop or TV ever opens.</em></div>
+        </li>
+        <li>
+          <div><b>A fake copy of a Wi-Fi you trust</b><span class="tech">EVIL TWIN</span></div>
+          <div class="how">Same network name, weaker security, attacker in control.<em>Caught when a name you know shows up with weaker security. Needs Location access.</em></div>
+        </li>
+      </ul>
+      <div class="tiers">
+        <span>Sure it is an attack: Wi-Fi off, full-screen alert</span>
+        <span class="warn">Could be innocent: a notification only</span>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-install" aria-labelledby="t-install" hidden>
+      <div class="install-head">
+        <h2>Install in two minutes</h2>
+        <div class="platforms" role="group" aria-label="Platform">
+          <button type="button" data-platform="mac" aria-pressed="true">macOS</button>
+          <button type="button" data-platform="win" aria-pressed="false">Windows</button>
+        </div>
+      </div>
+      <div data-os="mac">
+        <ol class="steps">
+          <li><span>Download the <b>.dmg</b>, open it, and drag <b>Wi-Fi Intrusion Monitor</b> into <b>Applications</b>.</span></li>
+          <li><span>Open the app. It is not from the App Store, so macOS blocks it the first time. Go to <b>System Settings → Privacy &amp; Security</b>, scroll down and click <b>Open Anyway</b>.</span></li>
+          <li><span>If your firewall is on, macOS asks whether the app may accept incoming connections. Click <b>Allow</b>. The decoy doors need it to see scans.</span></li>
+          <li><span>Optional: from the menu bar, choose <b>Show Wi-Fi names</b> and allow Location access. macOS hides Wi-Fi names from apps without it, and the evil-twin check needs the name.</span></li>
+        </ol>
+        <p class="dots">A dot appears in your menu bar. 🟢 watching · 🟠 recent warning · 🔴 alert on screen · ⚪️ paused. Click it to pause, see recent alerts, trust a network or show a test alert.</p>
+      </div>
+      <div data-os="win" hidden>
+        <ol class="steps">
+          <li><span>Download the <b>.exe</b> and move it somewhere it can stay, such as your <b>Documents</b> folder. Double-click it. There is nothing to install.</span></li>
+          <li><span>The app is not signed, so Windows may show <b>Windows protected your PC</b>. Click <b>More info</b>, then <b>Run anyway</b>.</span></li>
+          <li><span>Windows Firewall asks whether to allow the app. Tick <b>Private</b> and <b>Public</b> networks and click <b>Allow</b>. Airport and hotel Wi-Fi count as Public. This needs an administrator password; without it, port-scan detection stays off.</span></li>
+          <li><span>Optional: turn on <b>Settings → Privacy &amp; security → Location → Let desktop apps access your location</b>. Windows 11 hides Wi-Fi names without it, and the evil-twin check needs the name.</span></li>
+        </ol>
+        <p class="dots">A shield appears in the system tray at the bottom right (it may be under the <b>^</b> arrow). Its dot shows green watching, amber recent warning, red alert on screen, grey paused. Right-click it to pause, see recent alerts, trust a network or show a test alert.</p>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-privacy" aria-labelledby="t-privacy" hidden>
+      <h2>What it looks at, and what it leaves alone</h2>
+      <div class="cols">
+        <div class="card yes">
+          <h3>It does</h3>
+          <ul>
+            <li>Read your router's address and the devices your computer already knows about.</li>
+            <li>Look up a few public websites, such as Google and your bank, through the Wi-Fi and through Cloudflare's encrypted DNS, and compare the answers.</li>
+            <li>Keep a log of alerts on your computer.</li>
+          </ul>
+        </div>
+        <div class="card no">
+          <h3>It does not</h3>
+          <ul>
+            <li>Read the content of your browsing or messages.</li>
+            <li>Send anything about you to me or anyone else.</li>
+            <li>Read your location, even with Location access on.</li>
+            <li>Replace antivirus. It sees attacks aimed at your laptop, not what other devices do to each other.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" role="tabpanel" id="p-phones" aria-labelledby="t-phones" hidden>
+      <h2>Help build the phone version</h2>
+      <p>Phones are harder. iPhones do not let apps read the network or turn Wi-Fi off. Android allows part of it through a local VPN, which can block an attacker instead of disconnecting.</p>
+      <p>If you build iOS or Android apps and want to work on this, get in touch.</p>
+      <div class="links">
+        <a class="btn" href="mailto:hello@ayoadeabel.tech?subject=Wi-Fi%20Intrusion%20Monitor%20for%20phones">Email hello@ayoadeabel.tech</a>
+        <a class="ghost" href="https://www.linkedin.com/in/tripleaceme" target="_blank" rel="noopener">Message on LinkedIn</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>© 2026 Ayoade Adegbite · Free to use</span>
+  <a href="https://ayoadeabel.tech">ayoadeabel.tech</a>
+</footer>
+
+<script>
+  const tabs = [...document.querySelectorAll('[role="tab"]')];
+  function select(tab, focus) {
+    tabs.forEach(t => {
+      const on = t === tab;
+      t.setAttribute('aria-selected', on);
+      t.tabIndex = on ? 0 : -1;
+      document.getElementById(t.getAttribute('aria-controls')).hidden = !on;
+    });
+    if (focus) tab.focus();
+    tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    history.replaceState(null, '', '#' + tab.id.slice(2));
+  }
+  tabs.forEach((t, i) => {
+    t.addEventListener('click', () => select(t));
+    t.addEventListener('keydown', e => {
+      const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+      if (step) { e.preventDefault(); select(tabs[(i + step + tabs.length) % tabs.length], true); }
+    });
+  });
+  const fromHash = () => {
+    const tab = document.getElementById('t-' + location.hash.slice(1));
+    if (tab) select(tab);
+  };
+  fromHash();
+  window.addEventListener('hashchange', fromHash);
+
+  // One macOS/Windows choice drives every switch on the page, starting with the visitor's own system.
+  function showOS(os) {
+    document.querySelectorAll('[data-platform]').forEach(b => b.setAttribute('aria-pressed', b.dataset.platform === os));
+    document.querySelectorAll('[data-os]').forEach(el => el.hidden = el.dataset.os !== os);
+  }
+  document.querySelectorAll('[data-platform]').forEach(b => b.addEventListener('click', () => showOS(b.dataset.platform)));
+  showOS(/Windows/i.test(navigator.userAgent) ? 'win' : 'mac');
+</script>
+</body>
+</html>
